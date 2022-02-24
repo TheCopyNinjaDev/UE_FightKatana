@@ -25,6 +25,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Input)
 	float TurnRateGamepad;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Input)
+	bool IsLockedOnEnemy;
+
 protected:
 
 	/** Called for forwards/backward input */
@@ -50,6 +53,9 @@ protected:
 
 	/** Handler for when a touch input stops. */
 	void TouchStopped(ETouchIndex::Type FingerIndex, FVector Location);
+	
+	/** Lock Target on enemy*/
+	void LockTarget();
 
 protected:
 	// APawn interface

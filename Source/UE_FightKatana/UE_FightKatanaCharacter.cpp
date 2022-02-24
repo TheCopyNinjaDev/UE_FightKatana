@@ -60,6 +60,7 @@ void AUE_FightKatanaCharacter::SetupPlayerInputComponent(class UInputComponent* 
 	check(PlayerInputComponent);
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
+	PlayerInputComponent->BindAction("LockTarget", IE_Pressed, this, &AUE_FightKatanaCharacter::LockTarget);
 
 	PlayerInputComponent->BindAxis("Move Forward / Backward", this, &AUE_FightKatanaCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("Move Right / Left", this, &AUE_FightKatanaCharacter::MoveRight);
@@ -75,6 +76,19 @@ void AUE_FightKatanaCharacter::SetupPlayerInputComponent(class UInputComponent* 
 	// handle touch devices
 	PlayerInputComponent->BindTouch(IE_Pressed, this, &AUE_FightKatanaCharacter::TouchStarted);
 	PlayerInputComponent->BindTouch(IE_Released, this, &AUE_FightKatanaCharacter::TouchStopped);
+}
+void AUE_FightKatanaCharacter::LockTarget()
+{
+	if(!IsLockedOnEnemy)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 12.f, FColor::Green, TEXT("Locked"));
+	}
+	else
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 12.f, FColor::Green, TEXT("Unlocked"));
+	}
+
+	IsLockedOnEnemy = !IsLockedOnEnemy;
 }
 
 void AUE_FightKatanaCharacter::TouchStarted(ETouchIndex::Type FingerIndex, FVector Location)
