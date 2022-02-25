@@ -1,13 +1,16 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "UE_FightKatanaCharacter.h"
+
+#include "BlueprintEditor.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "UObject/PropertyAccessUtil.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AUE_FightKatanaCharacter
@@ -68,7 +71,7 @@ void AUE_FightKatanaCharacter::SetupPlayerInputComponent(class UInputComponent* 
 
 	// We have 2 versions of the rotation bindings to handle different kinds of devices differently
 	// "turn" handles devices that provide an absolute delta, such as a mouse.
-	// "turnrate" is for devices that we choose to treat as a rate of change, such as an analog joystick
+	// "turnRate" is for devices that we choose to treat as a rate of change, such as an analog joystick
 	PlayerInputComponent->BindAxis("Turn Right / Left Mouse", this, &AUE_FightKatanaCharacter::TurnAtRate);
 	PlayerInputComponent->BindAxis("Turn Right / Left Gamepad", this, &AUE_FightKatanaCharacter::TurnAtRate);
 	PlayerInputComponent->BindAxis("Look Up / Down Mouse", this, &AUE_FightKatanaCharacter::LookUpAtRate);
@@ -80,7 +83,69 @@ void AUE_FightKatanaCharacter::SetupPlayerInputComponent(class UInputComponent* 
 }
 void AUE_FightKatanaCharacter::LockTarget()
 {
-	IsLockedOnEnemy = !IsLockedOnEnemy;
+	if(IsLockedOnEnemy)
+	{
+		LockedOnTarget = nullptr;
+		IsLockedOnEnemy = false;
+		bUseControllerRotationYaw = false;
+	}
+	else
+	{
+		FVector StartLocation = GetActorLocation();
+		FVector EndLocation = FollowCamera->GetForwardVector() * 1000 + GetActorLocation();
+		TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypesArray;
+		ObjectTypesArray.Reserve(1);
+		ObjectTypesArray.Emplace(ObjectTypeQuery4);
+
+		const TArray<AActor*> ActorsToIgnore;
+
+		if(FHitResult OutHit; UKismetSystemLibrary::SphereTraceSingleForObjects(
+			GetWorld(),
+			StartLocation,
+			EndLocation,
+			300,
+			ObjectTypesArray,
+			false,
+			ActorsToIgnore,
+			EDrawDebugTrace::None,
+			OutHit,
+			true))
+		{
+			if(IsValid(OutHit.GetActor()) && OutHit.GetActor()->Tags.Contains("EnemyTag"))
+			{
+				LockedOnTarget = OutHit.GetActor();
+				IsLockedOnEnemy = true;
+				bUseControllerRotationYaw = true;
+			}
+		}
+	}
+
+	
+}
+
+// Called every frame
+void AUE_FightKatanaCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+	if(IsLockedOnEnemy)
+	{
+		// Find current rotator
+		const FRotator Current = GetController()->K2_GetActorRotation();
+
+		// Find target rotator
+		FVector ActorLocation = LockedOnTarget->GetActorLocation();
+		ActorLocation.Set(ActorLocation.X, ActorLocation.Y, ActorLocation.Z - 200);
+		const FRotator Target = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), ActorLocation);
+
+		const FRotator Interpretation = FMath::RInterpTo(Current, Target, DeltaTime, 10);
+		FRotator ResultRotator;
+		ResultRotator.Roll = Current.Roll;
+		ResultRotator.Pitch = Interpretation.Pitch;
+		ResultRotator.Yaw = Interpretation.Yaw;
+
+		
+		GetController()->SetControlRotation(ResultRotator);
+	}
 }
 
 void AUE_FightKatanaCharacter::TouchStarted(ETouchIndex::Type FingerIndex, FVector Location)

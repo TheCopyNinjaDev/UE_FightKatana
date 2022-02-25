@@ -28,6 +28,11 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Input)
 	bool IsLockedOnEnemy;
 
+	// Called every frame
+	virtual void Tick(float DeltaTime) override;
+
+	AActor* LockedOnTarget;
+
 protected:
 
 	/** Called for forwards/backward input */
