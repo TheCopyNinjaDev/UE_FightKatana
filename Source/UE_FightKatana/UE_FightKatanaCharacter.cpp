@@ -3,9 +3,11 @@
 #include "UE_FightKatanaCharacter.h"
 
 #include "BlueprintEditor.h"
+#include "UnrealWidgetFwd.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
+#include "Components/WidgetComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -85,6 +87,14 @@ void AUE_FightKatanaCharacter::LockTarget()
 {
 	if(IsLockedOnEnemy)
 	{
+		if(LockedOnTarget)
+		{
+			if(LockedOnTarget->GetDefaultSubobjectByName(TEXT("Lock On Reticle")))
+			{
+				Cast<UWidgetComponent>(
+					LockedOnTarget->GetDefaultSubobjectByName(TEXT("Lock On Reticle")))->SetHiddenInGame(true);
+			}
+		}
 		LockedOnTarget = nullptr;
 		IsLockedOnEnemy = false;
 		bUseControllerRotationYaw = false;
@@ -114,6 +124,11 @@ void AUE_FightKatanaCharacter::LockTarget()
 			if(IsValid(OutHit.GetActor()) && OutHit.GetActor()->Tags.Contains("EnemyTag"))
 			{
 				LockedOnTarget = OutHit.GetActor();
+				if(LockedOnTarget->GetDefaultSubobjectByName(TEXT("Lock On Reticle")))
+				{
+					Cast<UWidgetComponent>(
+						LockedOnTarget->GetDefaultSubobjectByName(TEXT("Lock On Reticle")))->SetHiddenInGame(false);
+				}
 				IsLockedOnEnemy = true;
 				bUseControllerRotationYaw = true;
 			}

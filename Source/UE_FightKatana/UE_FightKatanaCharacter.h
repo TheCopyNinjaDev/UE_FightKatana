@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Components/WidgetComponent.h"
 #include "UE_FightKatanaCharacter.generated.h"
 
 UCLASS(config=Game)
